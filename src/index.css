@@ -1,0 +1,227 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base Styles */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+body {
+  @apply bg-[#F4F4F9] dark:bg-[#1E1E2F] text-gray-800 dark:text-gray-200 font-sans antialiased;
+}
+
+/* Sakura theme utility classes */
+@layer components {
+  .sakura-card {
+    @apply bg-white dark:bg-[#282836] border border-[#D6A4A4]/10 dark:border-[#D6A4A4]/20 shadow-md rounded-2xl overflow-hidden;
+  }
+  
+  .btn-sakura {
+    @apply bg-[#D6A4A4] hover:bg-[#C98C8C] text-gray-800 dark:text-white font-medium rounded-lg transition-colors;
+  }
+  
+  .input-field {
+    @apply bg-gray-50 dark:bg-[#1E1E2F]/30 border border-gray-300 dark:border-gray-700 rounded-lg focus:border-[#D6A4A4] focus:ring-[#D6A4A4]/20 text-gray-800 dark:text-gray-200;
+  }
+  
+  .text-heading {
+    @apply text-xl font-semibold text-gray-800 dark:text-white;
+  }
+  
+  .text-subheading {
+    @apply text-sm text-gray-600 dark:text-gray-400;
+  }
+  
+  .badge {
+    @apply px-2 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .badge-sakura {
+    @apply bg-[#D6A4A4]/20 text-[#D6A4A4] dark:bg-[#D6A4A4]/30 dark:text-white;
+  }
+  
+  .page-title {
+    @apply text-3xl font-bold tracking-tight text-gray-800 dark:text-white bg-[#D6A4A4]/10 dark:bg-[#D6A4A4]/20 px-4 py-1 rounded-full inline-block;
+  }
+  
+  /* Field containers with better visibility */
+  .field-container {
+    @apply bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-sm;
+  }
+  
+  /* Label with better contrast */
+  .contrast-label {
+    @apply text-gray-700 dark:text-gray-200 font-medium bg-gray-100 dark:bg-gray-800/60 px-2 py-1 rounded-md;
+  }
+  
+  /* Input with better contrast */
+  .contrast-input {
+    @apply border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-[#D6A4A4] focus:ring-[#D6A4A4]/20;
+  }
+  
+  /* Select with better contrast */
+  .contrast-select {
+    @apply border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100;
+  }
+  
+  /* Empty state component */
+  .empty-state {
+    @apply flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-200 dark:border-gray-700 text-center;
+  }
+  
+  .empty-state-icon {
+    @apply text-gray-400 dark:text-gray-500 mb-4 h-12 w-12;
+  }
+  
+  .empty-state-text {
+    @apply text-gray-600 dark:text-gray-300 text-lg font-medium;
+  }
+  
+  .empty-state-subtext {
+    @apply text-gray-500 dark:text-gray-400 text-sm mt-1;
+  }
+}
+
+/* Cherry blossom petals animation */
+.cherry-petal {
+  @apply absolute w-4 h-4 rounded-full bg-[#D6A4A4]/20 dark:bg-[#D6A4A4]/40;
+  opacity: 0;
+  animation: falling 10s infinite ease-in-out;
+}
+
+.cherry-petal:nth-child(1) {
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.cherry-petal:nth-child(2) {
+  left: 20%;
+  animation-delay: 1s;
+}
+
+.cherry-petal:nth-child(3) {
+  left: 35%;
+  animation-delay: 3s;
+}
+
+.cherry-petal:nth-child(4) {
+  left: 50%;
+  animation-delay: 5s;
+}
+
+.cherry-petal:nth-child(5) {
+  left: 65%;
+  animation-delay: 7s;
+}
+
+.cherry-petal:nth-child(6) {
+  left: 75%;
+  animation-delay: 2s;
+}
+
+.cherry-petal:nth-child(7) {
+  left: 85%;
+  animation-delay: 4s;
+}
+
+.cherry-petal:nth-child(8) {
+  left: 90%;
+  animation-delay: 6s;
+}
+
+.cherry-petal:nth-child(9) {
+  left: 15%;
+  animation-delay: 8s;
+}
+
+@keyframes falling {
+  0% {
+    opacity: 0;
+    top: -10%;
+    transform: translateX(0) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  20% {
+    transform: translateX(20px) rotate(45deg);
+  }
+  40% {
+    transform: translateX(-20px) rotate(90deg);
+  }
+  60% {
+    transform: translateX(20px) rotate(180deg);
+  }
+  80% {
+    transform: translateX(-20px) rotate(270deg);
+  }
+  100% {
+    opacity: 0;
+    top: 110%;
+    transform: translateX(0) rotate(360deg);
+  }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
