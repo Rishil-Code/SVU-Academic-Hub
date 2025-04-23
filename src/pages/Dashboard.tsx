@@ -6,6 +6,7 @@ import { useAcademic } from "@/contexts/AcademicContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Book, Award, Users, GraduationCap, Briefcase, Code2 } from "lucide-react";
 import { api, Project, Internship } from "@/utils/api";
+import { DarkModeToggle } from "@/components/DarkModeToggle";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -22,8 +23,8 @@ export default function Dashboard() {
         if (user.role === 'teacher') {
           // For teachers, fetch all students' data
           const [projectsData, internshipsData] = await Promise.all([
-            api.getProjects('all'),  // We'll update the API to handle this
-            api.getInternships('all')  // We'll update the API to handle this
+            api.getProjects(0),  // Using 0 to indicate all projects
+            api.getInternships(0)  // Using 0 to indicate all internships
           ]);
           setProjectsData(projectsData);
           setInternshipsData(internshipsData);
@@ -241,22 +242,22 @@ export default function Dashboard() {
           <Card className="sakura-card">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Roll Number
+                Student ID
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold">{user.rollNo}</div>
+              <div className="text-xl font-bold">{user.id}</div>
             </CardContent>
           </Card>
           
           <Card className="sakura-card">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Program & Branch
+                Role
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold">{user.program} - {user.branch}</div>
+              <div className="text-xl font-bold capitalize">{user.role}</div>
             </CardContent>
           </Card>
           
@@ -378,7 +379,7 @@ export default function Dashboard() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome, {user.name}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome back!</h1>
             <p className="text-gray-500 dark:text-gray-400">
               Here's what's happening with your account today.
             </p>
@@ -393,6 +394,3 @@ export default function Dashboard() {
     </MainLayout>
   );
 }
-
-// Import the dark mode toggle component at the top of the file
-import { DarkModeToggle } from "@/components/DarkModeToggle";

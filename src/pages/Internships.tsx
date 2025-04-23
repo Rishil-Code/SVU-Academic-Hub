@@ -19,6 +19,7 @@ interface InternshipFormData {
   description: string;
   start_date: string;
   end_date: string;
+  user_id: number;
 }
 
 export default function Internships() {
@@ -32,7 +33,8 @@ export default function Internships() {
     position: '',
     description: '',
     start_date: '',
-    end_date: ''
+    end_date: '',
+    user_id: 0
   });
 
   const loadInternships = async () => {
@@ -68,24 +70,43 @@ export default function Internships() {
 
     try {
       setIsSubmitting(true);
-      await api.addInternship({
+      const response = await api.addInternship({
         ...formData,
         user_id: Number(user.id)
       });
-      toast.success('Internship added successfully');
-      setFormData({
-        company: '',
-        position: '',
-        description: '',
-        start_date: '',
-        end_date: ''
-      });
-      loadInternships();
+      
+      if (response.success) {
+        toast.success('Internship added successfully');
+        setFormData({
+          company: '',
+          position: '',
+          description: '',
+          start_date: '',
+          end_date: '',
+          user_id: 0
+        });
+        loadInternships();
+      }
     } catch (err) {
       console.error('Error adding internship:', err);
       toast.error('Failed to add internship. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteInternship = async (id: number) => {
+    if (!user) return;
+
+    try {
+      const response = await api.deleteInternship(id);
+      if (response.success) {
+        toast.success('Internship deleted successfully');
+        loadInternships();
+      }
+    } catch (err) {
+      console.error('Error deleting internship:', err);
+      toast.error('Failed to delete internship. Please try again.');
     }
   };
 
@@ -253,21 +274,36 @@ export default function Internships() {
                         <Briefcase className="h-5 w-5 text-[#D6A4A4]" />
                         <CardTitle className="text-xl text-gray-800 dark:text-gray-100">{internship.position}</CardTitle>
                       </div>
+                      {(user.role === 'teacher' || user.role === 'admin') && internship.user && (
+                        <CardDescription className="text-sm font-medium mt-1 flex items-center text-[#D6A4A4]">
+                          By {internship.user.username}
+                        </CardDescription>
+                      )}
                       <CardDescription className="text-sm font-medium mt-1 flex items-center text-gray-600 dark:text-gray-300">
                         {internship.company}
                       </CardDescription>
-                    </div>
-                    <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400">
-                      <Calendar className="h-3 w-3" />
-                      <span className="text-xs">
+                      <CardDescription className="text-sm font-medium mt-1 flex items-center text-gray-500 dark:text-gray-400">
                         {format(new Date(internship.start_date), 'MMM yyyy')} - {format(new Date(internship.end_date), 'MMM yyyy')}
-                      </span>
+                      </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-4">
-                  <p className="text-gray-600 dark:text-gray-300 text-sm">{internship.description}</p>
+                <CardContent className="pt-4 pb-6 bg-white/50 dark:bg-gray-800/50">
+                  <p className="text-gray-600 dark:text-gray-300 text-sm text-center">{internship.description}</p>
                 </CardContent>
+                {user.role === 'student' && (
+                  <div className="bg-[#F4F4F9]/70 dark:bg-[#2B2D42]/50">
+                    <div className="flex justify-center border-t border-gray-100 dark:border-gray-700">
+                      <div 
+                        className="flex items-center gap-2 text-[#FF6B6B] p-4 cursor-pointer hover:opacity-80"
+                        onClick={() => handleDeleteInternship(internship.id)}
+                      >
+                        <Trash2 className="h-5 w-5" />
+                        <span>Delete</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </Card>
             ))}
           </div>

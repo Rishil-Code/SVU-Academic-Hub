@@ -48,13 +48,23 @@ class Internship(db.Model):
 # Create database tables
 with app.app_context():
     db.create_all()
+    
+    # Create default admin user if not exists
+    if not User.query.filter_by(username='administrator1').first():
+        admin = User(username='administrator1', password='password123', role='admin')
+        db.session.add(admin)
+        db.session.commit()
 
-# Root route
+    # Create default teacher if not exists
+    if not User.query.filter_by(username='rishil').first():
+        teacher = User(username='rishil', password='password123', role='teacher')
+        db.session.add(teacher)
+        db.session.commit()
+
 @app.route('/')
 def index():
     return "Flask server is running ✅"
 
-# API Routes
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -74,7 +84,10 @@ def login():
 def handle_certificates():
     if request.method == 'GET':
         user_id = request.args.get('user_id')
-        certificates = Certificate.query.filter_by(user_id=user_id).all()
+        if user_id == 'all':
+            certificates = Certificate.query.all()
+        else:
+            certificates = Certificate.query.filter_by(user_id=int(user_id)).all()
         return jsonify([{
             'id': c.id,
             'title': c.title,
@@ -82,61 +95,94 @@ def handle_certificates():
             'date_issued': c.date_issued,
             'user_id': c.user_id
         } for c in certificates])
-    
     elif request.method == 'POST':
         data = request.get_json()
         certificate = Certificate(
             title=data['title'],
             issuer=data['issuer'],
             date_issued=data['date_issued'],
-            user_id=data['user_id']
+            user_id=int(data['user_id'])
         )
         db.session.add(certificate)
         db.session.commit()
         return jsonify({'success': True, 'id': certificate.id})
+
+@app.route('/api/certificates/<int:id>', methods=['DELETE'])
+def delete_certificate(id):
+    try:
+        certificate = db.session.get(Certificate, id)
+        if not certificate:
+            return jsonify({'success': False, 'message': 'Certificate not found'}), 404
+        
+        db.session.delete(certificate)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Certificate deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting certificate: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/projects', methods=['GET', 'POST'])
 def handle_projects():
     if request.method == 'GET':
         user_id = request.args.get('user_id')
         if user_id == 'all':
-            # Return all projects for teachers
             projects = Project.query.all()
         else:
-            # Return specific student's projects
-            projects = Project.query.filter_by(user_id=user_id).all()
+            projects = Project.query.filter_by(user_id=int(user_id)).all()
         return jsonify([{
             'id': p.id,
             'title': p.title,
             'description': p.description,
             'start_date': p.start_date,
             'end_date': p.end_date,
-            'user_id': p.user_id
+            'user_id': p.user_id,
+            'user': {
+                'id': p.user.id if p.user else None,
+                'username': p.user.username if p.user else 'Unknown',
+                'role': p.user.role if p.user else 'student'
+            } if p.user else None
         } for p in projects])
-    
     elif request.method == 'POST':
         data = request.get_json()
-        project = Project(
-            title=data['title'],
-            description=data['description'],
-            start_date=data['start_date'],
-            end_date=data['end_date'],
-            user_id=data['user_id']
-        )
-        db.session.add(project)
+        try:
+            project = Project(
+                title=data['title'],
+                description=data['description'],
+                start_date=data['start_date'],
+                end_date=data['end_date'],
+                user_id=int(data['user_id'])
+            )
+            db.session.add(project)
+            db.session.commit()
+            return jsonify({'success': True, 'id': project.id})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/projects/<int:id>', methods=['DELETE'])
+def delete_project(id):
+    try:
+        project = db.session.get(Project, id)
+        if not project:
+            return jsonify({'success': False, 'message': 'Project not found'}), 404
+        
+        db.session.delete(project)
         db.session.commit()
-        return jsonify({'success': True, 'id': project.id})
+        return jsonify({'success': True, 'message': 'Project deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting project: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/internships', methods=['GET', 'POST'])
 def handle_internships():
     if request.method == 'GET':
         user_id = request.args.get('user_id')
         if user_id == 'all':
-            # Return all internships for teachers
             internships = Internship.query.all()
         else:
-            # Return specific student's internships
-            internships = Internship.query.filter_by(user_id=user_id).all()
+            internships = Internship.query.filter_by(user_id=int(user_id)).all()
         return jsonify([{
             'id': i.id,
             'company': i.company,
@@ -144,22 +190,45 @@ def handle_internships():
             'start_date': i.start_date,
             'end_date': i.end_date,
             'description': i.description,
-            'user_id': i.user_id
+            'user_id': i.user_id,
+            'user': {
+                'id': i.user.id if i.user else None,
+                'username': i.user.username if i.user else 'Unknown',
+                'role': i.user.role if i.user else 'student'
+            } if i.user else None
         } for i in internships])
-    
     elif request.method == 'POST':
         data = request.get_json()
-        internship = Internship(
-            company=data['company'],
-            position=data['position'],
-            start_date=data['start_date'],
-            end_date=data['end_date'],
-            description=data['description'],
-            user_id=data['user_id']
-        )
-        db.session.add(internship)
+        try:
+            internship = Internship(
+                company=data['company'],
+                position=data['position'],
+                start_date=data['start_date'],
+                end_date=data['end_date'],
+                description=data['description'],
+                user_id=int(data['user_id'])
+            )
+            db.session.add(internship)
+            db.session.commit()
+            return jsonify({'success': True, 'id': internship.id})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/internships/<int:id>', methods=['DELETE'])
+def delete_internship(id):
+    try:
+        internship = db.session.get(Internship, id)
+        if not internship:
+            return jsonify({'success': False, 'message': 'Internship not found'}), 404
+        
+        db.session.delete(internship)
         db.session.commit()
-        return jsonify({'success': True, 'id': internship.id})
+        return jsonify({'success': True, 'message': 'Internship deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting internship: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000) 
+    app.run(debug=True) 

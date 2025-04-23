@@ -21,6 +21,11 @@ export interface Project {
     start_date: string;
     end_date: string;
     user_id: number;
+    user?: {
+        id: number;
+        username: string;
+        role: string;
+    };
 }
 
 export interface Internship {
@@ -30,6 +35,28 @@ export interface Internship {
     start_date: string;
     end_date: string;
     description: string;
+    user_id: number;
+    user?: {
+        id: number;
+        username: string;
+        role: string;
+    };
+}
+
+export interface InternshipFormData {
+    company: string;
+    position: string;
+    start_date: string;
+    end_date: string;
+    description: string;
+    user_id: number;
+}
+
+export interface ProjectFormData {
+    title: string;
+    description: string;
+    start_date: string;
+    end_date: string;
     user_id: number;
 }
 
@@ -51,10 +78,10 @@ export const api = {
             if (!response.ok) {
                 throw new Error('Failed to fetch certificates');
             }
-            return response.json();
+            return await response.json();
         } catch (error) {
             console.error('Error fetching certificates:', error);
-            throw error;
+            return [];
         }
     },
 
@@ -65,31 +92,29 @@ export const api = {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    ...certificate,
-                    user_id: certificate.user_id.toString(),
-                }),
+                body: JSON.stringify(certificate),
             });
+            const data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to add certificate');
+                throw new Error(data.message || 'Failed to add certificate');
             }
-            return response.json();
+            return data;
         } catch (error) {
             console.error('Error adding certificate:', error);
             throw error;
         }
     },
 
-    getProjects: async (userId: number | 'all'): Promise<Project[]> => {
+    getProjects: async (userId: number): Promise<Project[]> => {
         try {
             const response = await fetch(`${API_BASE_URL}/projects?user_id=${userId}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch projects');
             }
-            return response.json();
+            return await response.json();
         } catch (error) {
             console.error('Error fetching projects:', error);
-            throw error;
+            return [];
         }
     },
 
@@ -100,28 +125,27 @@ export const api = {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    ...project,
-                    user_id: project.user_id.toString(),
-                }),
+                body: JSON.stringify(project),
             });
+            const data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to add project');
+                throw new Error(data.message || 'Failed to add project');
             }
-            return response.json();
+            return data;
         } catch (error) {
             console.error('Error adding project:', error);
             throw error;
         }
     },
 
-    getInternships: async (userId: number | 'all'): Promise<Internship[]> => {
+    getInternships: async (userId: number): Promise<Internship[]> => {
         try {
             const response = await fetch(`${API_BASE_URL}/internships?user_id=${userId}`);
+            const data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch internships');
+                throw new Error(data.message || 'Failed to fetch internships');
             }
-            return response.json();
+            return data;
         } catch (error) {
             console.error('Error fetching internships:', error);
             throw error;
@@ -135,15 +159,13 @@ export const api = {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    ...internship,
-                    user_id: internship.user_id.toString(),
-                }),
+                body: JSON.stringify(internship),
             });
+            const data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to add internship');
+                throw new Error(data.message || 'Failed to add internship');
             }
-            return response.json();
+            return data;
         } catch (error) {
             console.error('Error adding internship:', error);
             throw error;
@@ -162,6 +184,48 @@ export const api = {
         } catch (error) {
             console.error('Error deleting certificate:', error);
             throw error;
+        }
+    },
+
+    deleteProject: async (id: number): Promise<{ success: boolean; message?: string }> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete project');
+            }
+
+            const data = await response.json();
+            return { success: true, message: data.message };
+        } catch (error) {
+            console.error('Error deleting project:', error);
+            return { success: false, message: 'Failed to delete project' };
+        }
+    },
+
+    deleteInternship: async (id: number): Promise<{ success: boolean; message?: string }> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/internships/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete internship');
+            }
+
+            const data = await response.json();
+            return { success: true, message: data.message };
+        } catch (error) {
+            console.error('Error deleting internship:', error);
+            return { success: false, message: 'Failed to delete internship' };
         }
     },
 }; 

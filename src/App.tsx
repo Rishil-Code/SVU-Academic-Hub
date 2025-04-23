@@ -1,4 +1,3 @@
-
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
@@ -11,11 +10,11 @@ import AccountSettings from "@/pages/AccountSettings";
 import StudentRecords from "@/pages/StudentRecords";
 import GradeManagement from "@/pages/GradeManagement";
 import UserManagement from "@/pages/UserManagement";
-import Projects from "@/pages/Projects";
-import Internships from "@/pages/Internships";
 import Results from "@/pages/Results";
 import NotFound from "@/pages/NotFound";
 import Certificates from "@/pages/Certificates";
+import Internships from "@/pages/Internships";
+import Projects from "@/pages/Projects";
 
 // Contexts
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -32,12 +31,11 @@ function App() {
       <AuthProvider>
         <AcademicProvider>
           <CertificateProvider>
+            <Toaster position="top-center" richColors />
             <Router>
               <Routes>
                 <Route path="/" element={<Login />} />
-                <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/settings" element={<AccountSettings />} />
                 <Route path="/students" element={<StudentRecords />} />
                 <Route path="/grades" element={<GradeManagement />} />
                 <Route path="/users" element={<UserManagement />} />
@@ -45,10 +43,10 @@ function App() {
                 <Route path="/internships" element={<Internships />} />
                 <Route path="/certificates" element={<Certificates />} />
                 <Route path="/results" element={<Results />} />
+                <Route path="/settings" element={<AccountSettings />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Router>
-            <Toaster position="top-center" richColors />
           </CertificateProvider>
         </AcademicProvider>
       </AuthProvider>
