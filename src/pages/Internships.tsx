@@ -36,13 +36,20 @@ export default function Internships() {
     end_date: '',
     user_id: 0
   });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const loadInternships = async () => {
-    if (!user) return;
+    if (!user?.id) {
+      setError('User not found. Please log in again.');
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
     try {
-      setIsLoading(true);
-      setError(null);
+      console.log('Fetching internships for user:', user.id);
       const data = await api.getInternships(Number(user.id));
+      console.log('Received internships:', data);
       setInternships(data);
     } catch (err) {
       console.error('Error loading internships:', err);
@@ -54,7 +61,7 @@ export default function Internships() {
 
   useEffect(() => {
     loadInternships();
-  }, [user]);
+  }, [user?.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -66,47 +73,55 @@ export default function Internships() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user?.id) {
+      toast.error('User not found. Please log in again.');
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
+      console.log('Adding internship:', { ...formData, user_id: Number(user.id) });
       const response = await api.addInternship({
         ...formData,
         user_id: Number(user.id)
       });
-      
+
       if (response.success) {
         toast.success('Internship added successfully');
         setFormData({
           company: '',
           position: '',
-          description: '',
           start_date: '',
           end_date: '',
+          description: '',
           user_id: 0
         });
-        loadInternships();
+        setIsDialogOpen(false);
+        await loadInternships();
+      } else {
+        throw new Error('Failed to add internship');
       }
     } catch (err) {
       console.error('Error adding internship:', err);
-      toast.error('Failed to add internship. Please try again.');
+      toast.error(err instanceof Error ? err.message : 'Failed to add internship. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteInternship = async (id: number) => {
-    if (!user) return;
-
     try {
-      const response = await api.deleteInternship(id);
-      if (response.success) {
-        toast.success('Internship deleted successfully');
-        loadInternships();
-      }
-    } catch (err) {
-      console.error('Error deleting internship:', err);
-      toast.error('Failed to delete internship. Please try again.');
+        const result = await api.deleteInternship(id);
+        if (result.success) {
+            toast.success('Internship deleted successfully');
+            // Force a reload of internships to ensure the list is updated
+            await loadInternships();
+        } else {
+            throw new Error(result.message || 'Failed to delete internship');
+        }
+    } catch (error) {
+        console.error('Error deleting internship:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to delete internship');
     }
   };
 

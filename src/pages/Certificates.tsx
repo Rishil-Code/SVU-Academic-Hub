@@ -10,110 +10,82 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Plus, Trash2, Award, School, Calendar, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 interface CertificateFormData {
     title: string;
     issuer: string;
     date_issued: string;
+    user_id: number;
 }
 
 const Certificates: React.FC = () => {
     const { user } = useAuth();
     const [certificates, setCertificates] = useState<Certificate[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [newCertificate, setNewCertificate] = useState<CertificateFormData>({
+    const [formData, setFormData] = useState<CertificateFormData>({
         title: '',
         issuer: '',
         date_issued: '',
+        user_id: 0
     });
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (user?.id) {
-            loadCertificates();
-        } else {
-            setIsLoading(false); // Reset loading if no user
-        }
-    }, [user?.id]);
 
     const loadCertificates = async () => {
         if (!user?.id) {
+            setError('User not found. Please log in again.');
             setIsLoading(false);
             return;
         }
-        
         setIsLoading(true);
-        setError(null); // Reset error state
-
+        setError(null);
         try {
-            const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
-            
-            if (isNaN(userId)) {
-                throw new Error('Invalid user ID');
-            }
-
-            console.log('Loading certificates for user:', {
-                userId: userId,
-                userRole: user.role
-            });
-            const data = await api.getCertificates(userId);
-            console.log('Loaded certificates:', data);
-            
-            // Only set certificates if component is still mounted
-            setCertificates(data || []);
-        } catch (error) {
-            console.error('Error loading certificates:', error);
+            const data = await api.getCertificates(Number(user.id));
+            setCertificates(data);
+        } catch (err) {
+            console.error('Error loading certificates:', err);
             setError('Failed to load certificates. Please try again.');
-            setCertificates([]); // Reset certificates on error
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleAddCertificate = async (e: React.FormEvent) => {
+    useEffect(() => {
+        loadCertificates();
+    }, [user?.id]);  // Only reload when user ID changes
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user?.id) {
-            toast.error('User not found. Please try logging in again.');
+            toast.error('User not found. Please log in again.');
             return;
         }
 
         setIsSubmitting(true);
         try {
-            // Ensure user_id is a valid number
-            const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
-            
-            if (isNaN(userId)) {
-                throw new Error('Invalid user ID');
-            }
-
-            const certificateData = {
-                title: newCertificate.title.trim(),
-                issuer: newCertificate.issuer.trim(),
-                date_issued: newCertificate.date_issued,
-                user_id: userId
-            };
-
-            console.log('Submitting certificate:', {
-                userData: { id: userId, role: user.role },
-                certificateData
+            const response = await api.addCertificate({
+                ...formData,
+                user_id: Number(user.id)
             });
-
-            const response = await api.addCertificate(certificateData);
-            console.log('Add certificate response:', response);
 
             if (response.success) {
                 toast.success('Certificate added successfully');
-                setNewCertificate({ title: '', issuer: '', date_issued: '' });
+                setFormData({
+                    title: '',
+                    issuer: '',
+                    date_issued: '',
+                    user_id: 0
+                });
                 setIsDialogOpen(false);
                 await loadCertificates();
             } else {
                 throw new Error('Failed to add certificate');
             }
-        } catch (error) {
-            console.error('Error in handleAddCertificate:', error);
-            toast.error(error instanceof Error ? error.message : 'Failed to add certificate. Please try again.');
+        } catch (err) {
+            console.error('Error adding certificate:', err);
+            toast.error(err instanceof Error ? err.message : 'Failed to add certificate. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
@@ -135,7 +107,7 @@ const Certificates: React.FC = () => {
     };
 
     const getPageTitle = () => {
-        if (user?.role === 'student' || user?.role === 'teacher') {
+        if (user?.role === 'student') {
             return "My Certificates";
         } else {
             return "All Certificates";
@@ -143,7 +115,7 @@ const Certificates: React.FC = () => {
     };
 
     const getPageDescription = () => {
-        if (user?.role === 'student' || user?.role === 'teacher') {
+        if (user?.role === 'student') {
             return "Manage your professional certifications and achievements";
         } else {
             return "View all certifications and achievements";
@@ -172,7 +144,7 @@ const Certificates: React.FC = () => {
                             {getPageDescription()}
                         </p>
                     </div>
-                    {(user?.role === 'student' || user?.role === 'teacher') && (
+                    {user?.role === 'student' && (
                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button className="btn-sakura">
@@ -181,7 +153,7 @@ const Certificates: React.FC = () => {
                                 </Button>
                             </DialogTrigger>
                             <DialogContent className="sakura-card sm:max-w-[550px]">
-                                <form onSubmit={handleAddCertificate}>
+                                <form onSubmit={handleSubmit}>
                                     <DialogHeader>
                                         <DialogTitle className="text-gray-800 dark:text-white">Add New Certificate</DialogTitle>
                                         <DialogDescription>
@@ -193,8 +165,8 @@ const Certificates: React.FC = () => {
                                             <Label htmlFor="title" className="text-gray-800 dark:text-gray-200">Certificate Title</Label>
                                             <Input
                                                 id="title"
-                                                value={newCertificate.title}
-                                                onChange={(e) => setNewCertificate({ ...newCertificate, title: e.target.value })}
+                                                value={formData.title}
+                                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                                 required
                                                 className="input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                             />
@@ -203,36 +175,38 @@ const Certificates: React.FC = () => {
                                             <Label htmlFor="issuer" className="text-gray-800 dark:text-gray-200">Issuing Authority</Label>
                                             <Input
                                                 id="issuer"
-                                                value={newCertificate.issuer}
-                                                onChange={(e) => setNewCertificate({ ...newCertificate, issuer: e.target.value })}
+                                                value={formData.issuer}
+                                                onChange={(e) => setFormData({ ...formData, issuer: e.target.value })}
                                                 required
                                                 className="input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="date_issued" className="text-gray-800 dark:text-gray-200">Issue Date</Label>
+                                            <Label htmlFor="date_issued" className="text-gray-800 dark:text-gray-200">Date Issued</Label>
                                             <Input
                                                 id="date_issued"
                                                 type="date"
-                                                value={newCertificate.date_issued}
-                                                onChange={(e) => setNewCertificate({ ...newCertificate, date_issued: e.target.value })}
+                                                value={formData.date_issued}
+                                                onChange={(e) => setFormData({ ...formData, date_issued: e.target.value })}
                                                 required
                                                 className="input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                             />
                                         </div>
-                                        <Button 
-                                            type="submit" 
-                                            className="w-full btn-sakura"
+                                    </div>
+                                    <div className="mt-6 flex justify-end space-x-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => setIsDialogOpen(false)}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            className="btn-sakura"
                                             disabled={isSubmitting}
                                         >
-                                            {isSubmitting ? (
-                                                <>
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                                                    Adding...
-                                                </>
-                                            ) : (
-                                                'Add Certificate'
-                                            )}
+                                            {isSubmitting ? "Adding..." : "Add Certificate"}
                                         </Button>
                                     </div>
                                 </form>
@@ -266,7 +240,7 @@ const Certificates: React.FC = () => {
                         <Award className="h-12 w-12 text-[#D6A4A4] mb-4" />
                         <p className="text-gray-600 dark:text-gray-300 text-lg mb-2">No certificates yet</p>
                         <p className="text-gray-500 dark:text-gray-400 text-sm">
-                            {(user?.role === 'student' || user?.role === 'teacher')
+                            {(user?.role === 'student')
                                 ? "Add your first certificate to showcase your achievements" 
                                 : "No certificates have been added yet"}
                         </p>
@@ -296,7 +270,7 @@ const Certificates: React.FC = () => {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="pt-4">
-                                    {(user?.role === 'student' || user?.role === 'teacher') && certificate.user_id === Number(user.id) && (
+                                    {user?.role === 'student' && certificate.user_id === Number(user.id) && (
                                         <Button
                                             variant="ghost"
                                             size="sm"

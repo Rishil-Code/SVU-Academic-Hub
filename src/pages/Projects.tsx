@@ -35,11 +35,17 @@ const Projects: React.FC = () => {
     });
 
     const loadProjects = async () => {
-        if (!user) return;
+        if (!user?.id) {
+            setError('User not found. Please log in again.');
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
+            console.log('Fetching projects for user:', user.id);
             const data = await api.getProjects(Number(user.id));
+            console.log('Received projects:', data);
             setProjects(data);
         } catch (err) {
             console.error('Error loading projects:', err);
@@ -51,7 +57,7 @@ const Projects: React.FC = () => {
 
     useEffect(() => {
         loadProjects();
-    }, [user]);
+    }, [user?.id]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -64,12 +70,13 @@ const Projects: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user?.id) {
-            toast.error('User not found. Please try logging in again.');
+            toast.error('User not found. Please log in again.');
             return;
         }
 
         setIsSubmitting(true);
         try {
+            console.log('Adding project:', { ...formData, user_id: Number(user.id) });
             const response = await api.addProject({
                 ...formData,
                 user_id: Number(user.id)
@@ -100,8 +107,8 @@ const Projects: React.FC = () => {
         try {
             const result = await api.deleteProject(id);
             if (result.success) {
-                setProjects(projects.filter(project => project.id !== id));
                 toast.success('Project deleted successfully');
+                await loadProjects();
             } else {
                 throw new Error(result.message || 'Failed to delete project');
             }

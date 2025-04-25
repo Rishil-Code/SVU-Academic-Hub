@@ -1,27 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { api } from '@/utils/api';
-
-interface Internship {
-  id: number;
-  company: string;
-  position: string;
-  start_date: string;
-  end_date: string;
-  description: string;
-  user_id: number;
-}
+import type { Internship, InternshipFormData } from '@/utils/api';
 
 export default function InternshipsPage() {
   const { user } = useAuth();
   const [internships, setInternships] = useState<Internship[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<InternshipFormData, 'user_id'>>({
     company: '',
     position: '',
     start_date: '',
@@ -29,11 +20,11 @@ export default function InternshipsPage() {
     description: ''
   });
 
-  const loadInternships = async () => {
-    if (!user) return;
+  const loadInternships = useCallback(async () => {
+    if (!user?.id) return;
     setIsLoading(true);
     try {
-      const data = await api.getInternships(user.id);
+      const data = await api.getInternships(Number(user.id));
       setInternships(data);
     } catch (error) {
       console.error('Error loading internships:', error);
@@ -41,20 +32,20 @@ export default function InternshipsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     loadInternships();
-  }, [user]);
+  }, [loadInternships]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user?.id) return;
 
     try {
       await api.addInternship({
         ...formData,
-        user_id: user.id
+        user_id: Number(user.id)
       });
       toast.success('Internship added successfully!');
       setShowForm(false);
@@ -70,6 +61,14 @@ export default function InternshipsPage() {
       console.error('Error adding internship:', error);
       toast.error('Failed to add internship');
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
   };
 
   return (
@@ -111,7 +110,7 @@ export default function InternshipsPage() {
                 <Input
                   id="company"
                   value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  onChange={handleInputChange}
                   required
                 />
               </div>
@@ -120,7 +119,7 @@ export default function InternshipsPage() {
                 <Input
                   id="position"
                   value={formData.position}
-                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                  onChange={handleInputChange}
                   required
                 />
               </div>
@@ -130,7 +129,7 @@ export default function InternshipsPage() {
                   id="start_date"
                   type="date"
                   value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  onChange={handleInputChange}
                   required
                 />
               </div>
@@ -140,7 +139,7 @@ export default function InternshipsPage() {
                   id="end_date"
                   type="date"
                   value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  onChange={handleInputChange}
                   required
                 />
               </div>
@@ -149,7 +148,7 @@ export default function InternshipsPage() {
                 <Input
                   id="description"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={handleInputChange}
                   required
                 />
               </div>

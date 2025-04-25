@@ -4,6 +4,7 @@ export interface User {
     id: number;
     username: string;
     role: string;
+    name: string;
 }
 
 export interface Certificate {
@@ -12,6 +13,12 @@ export interface Certificate {
     issuer: string;
     date_issued: string;
     user_id: number;
+    user?: {
+        id: number;
+        username: string;
+        role: string;
+        name: string;
+    };
 }
 
 export interface Project {
@@ -25,6 +32,7 @@ export interface Project {
         id: number;
         username: string;
         role: string;
+        name: string;
     };
 }
 
@@ -40,6 +48,7 @@ export interface Internship {
         id: number;
         username: string;
         role: string;
+        name: string;
     };
 }
 
@@ -72,8 +81,12 @@ export const api = {
         return response.json();
     },
 
-    getCertificates: async (userId: number): Promise<Certificate[]> => {
+    getCertificates: async (userId: number | undefined): Promise<Certificate[]> => {
         try {
+            if (!userId) {
+                console.warn('No user ID provided for certificates fetch');
+                return [];
+            }
             const response = await fetch(`${API_BASE_URL}/certificates?user_id=${userId}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch certificates');
@@ -105,9 +118,16 @@ export const api = {
         }
     },
 
-    getProjects: async (userId: number): Promise<Project[]> => {
+    getProjects: async (userId: number | undefined): Promise<Project[]> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/projects?user_id=${userId}`);
+            if (userId === undefined) {
+                console.warn('No user ID provided for projects fetch');
+                return [];
+            }
+            const url = userId === 0 
+                ? `${API_BASE_URL}/projects?view=all` 
+                : `${API_BASE_URL}/projects?user_id=${userId}`;
+            const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to fetch projects');
             }
@@ -138,17 +158,23 @@ export const api = {
         }
     },
 
-    getInternships: async (userId: number): Promise<Internship[]> => {
+    getInternships: async (userId: number | undefined): Promise<Internship[]> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/internships?user_id=${userId}`);
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || 'Failed to fetch internships');
+            if (userId === undefined) {
+                console.warn('No user ID provided for internships fetch');
+                return [];
             }
-            return data;
+            const url = userId === 0 
+                ? `${API_BASE_URL}/internships?view=all` 
+                : `${API_BASE_URL}/internships?user_id=${userId}`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Failed to fetch internships');
+            }
+            return await response.json();
         } catch (error) {
             console.error('Error fetching internships:', error);
-            throw error;
+            return [];
         }
     },
 

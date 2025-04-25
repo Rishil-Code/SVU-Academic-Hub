@@ -26,19 +26,25 @@ export default function Dashboard() {
             api.getProjects(0),  // Using 0 to indicate all projects
             api.getInternships(0)  // Using 0 to indicate all internships
           ]);
-          setProjectsData(projectsData);
-          setInternshipsData(internshipsData);
+          console.log('Loaded projects:', projectsData);
+          console.log('Loaded internships:', internshipsData);
+          setProjectsData(projectsData || []);
+          setInternshipsData(internshipsData || []);
         } else {
           // For students, fetch only their own data
           const [projectsData, internshipsData] = await Promise.all([
             api.getProjects(Number(user.id)),
             api.getInternships(Number(user.id))
           ]);
-          setProjectsData(projectsData);
-          setInternshipsData(internshipsData);
+          console.log('Loaded projects:', projectsData);
+          console.log('Loaded internships:', internshipsData);
+          setProjectsData(projectsData || []);
+          setInternshipsData(internshipsData || []);
         }
       } catch (err) {
         console.error('Error loading dashboard data:', err);
+        setProjectsData([]);
+        setInternshipsData([]);
       } finally {
         setIsLoading(false);
       }
@@ -144,33 +150,9 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-          
-          <Card className="sakura-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Latest Updates
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm">
-                {Math.max(projectsData.length, internshipsData.length) > 0 ? (
-                  <div className="space-y-1">
-                    {projectsData[projectsData.length - 1] && (
-                      <div>New project: {projectsData[projectsData.length - 1].title}</div>
-                    )}
-                    {internshipsData[internshipsData.length - 1] && (
-                      <div>New internship: {internshipsData[internshipsData.length - 1].company}</div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-muted-foreground">No recent updates</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           <Card className="sakura-card">
             <CardHeader>
               <CardTitle>Recent Projects</CardTitle>
@@ -191,6 +173,11 @@ export default function Dashboard() {
                         <div className="text-sm text-muted-foreground">
                           {new Date(project.start_date).toLocaleDateString()} - {new Date(project.end_date).toLocaleDateString()}
                         </div>
+                        {project.user && (
+                          <div className="text-xs text-[#D6A4A4]">
+                            By {project.user.name || project.user.username}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -217,8 +204,13 @@ export default function Dashboard() {
                       <div>
                         <div className="font-medium">{internship.position}</div>
                         <div className="text-sm text-muted-foreground">
-                          {internship.company} • {new Date(internship.start_date).toLocaleDateString()} - {new Date(internship.end_date).toLocaleDateString()}
+                          {new Date(internship.start_date).toLocaleDateString()} - {new Date(internship.end_date).toLocaleDateString()}
                         </div>
+                        {internship.user && (
+                          <div className="text-xs text-[#D6A4A4]">
+                            By {internship.user.name || internship.user.username}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -348,6 +340,11 @@ export default function Dashboard() {
                         <div className="text-sm text-muted-foreground">
                           {new Date(project.start_date).toLocaleDateString()} - {new Date(project.end_date).toLocaleDateString()}
                         </div>
+                        {project.user && (
+                          <div className="text-xs text-[#D6A4A4]">
+                            By {project.user.name || project.user.username}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

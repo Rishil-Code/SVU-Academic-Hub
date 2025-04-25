@@ -60,7 +60,6 @@ export function SidebarMenu() {
     const teacherItems = [
       { icon: BookOpen, label: "Student Records", href: "/students" },
       { icon: FileCheck, label: "Grade Management", href: "/grades" },
-      { icon: Award, label: "Certificates", href: "/certificates" },
     ];
     
     const studentItems = [
